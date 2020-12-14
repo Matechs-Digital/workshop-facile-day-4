@@ -188,3 +188,19 @@ export function tuplePar<Apps extends readonly App<any, any, any>[]>(
     return E.right(results);
   };
 }
+
+export function provide<R>(
+  r: R
+): <R1, E, A>(fa: App<R & R1, E, A>) => App<R1, E, A> {
+  return (fa) => (c) => fa({ ...c, ...r });
+}
+
+export function provideM<R, R2, E2>(
+  r: App<R2, E2, R>
+): <R1, E, A>(fa: App<R & R1, E, A>) => App<R1 & R2, E | E2, A> {
+  return (fa) =>
+    pipe(
+      r,
+      chain((c) => pipe(fa, provide(c)))
+    );
+}

@@ -326,4 +326,108 @@ describe("App", () => {
 
     expect(result).toEqual(E.left("error"));
   });
+  it("should use provide", async () => {
+    interface Config {
+      Config: {
+        base: number;
+      };
+    }
+
+    function addOneTimeout(n: number): App.App<unknown, never, number> {
+      return App.async(
+        () =>
+          new Promise<number>((res) => {
+            setTimeout(() => {
+              res(n + 1);
+            }, 100);
+          })
+      );
+    }
+
+    class DivideError {
+      readonly _tag = "DivideError";
+      constructor(readonly s: string) {}
+    }
+
+    function divideOrFail(n: number): App.App<unknown, DivideError, number> {
+      return App.trySync(
+        () => {
+          if (n === 0) {
+            throw "n is 0";
+          }
+          return 10 / n;
+        },
+        (s) => new DivideError(s as string)
+      );
+    }
+
+    const initialValue = App.access((_: Config) => _.Config.base);
+
+    const program = pipe(
+      initialValue,
+      App.chain(addOneTimeout),
+      App.chain(divideOrFail),
+      App.catchAll(() => App.succeed(1)),
+      App.map((n) => n + 3),
+      App.provide<Config>({
+        Config: {
+          base: -1,
+        },
+      })
+    );
+
+    const main = program({});
+
+    const result = await main();
+
+    expect(result).toEqual(E.right(4));
+  });
+  it("should use provideM", async () => {
+    const lines: string[] = [];
+    interface Printer {
+      Printer: {
+        printLn: (line: string) => App.UIO<void>;
+      };
+    }
+    interface ConsoleService {
+      Console: {
+        log: (line: string) => void;
+      };
+    }
+    function printLn(line: string) {
+      return App.accessM(({ Printer }: Printer) => Printer.printLn(line));
+    }
+    const program = pipe(
+      printLn("hello"),
+      App.chain(() => printLn("world"))
+    );
+
+    const livePrinter = App.access(
+      (_: ConsoleService): Printer => ({
+        Printer: {
+          printLn: (line) =>
+            App.sync(() => {
+              _.Console.log(line);
+            }),
+        },
+      })
+    );
+
+    const testConsole: ConsoleService = {
+      Console: {
+        log: (line) => {
+          lines.push(line);
+        },
+      },
+    };
+
+    const main = pipe(
+      program,
+      App.provideM(livePrinter),
+      App.provide(testConsole)
+    );
+    const result = await main({})();
+    expect(result).toEqual(E.right(undefined));
+    expect(lines).toEqual(["hello", "world"]);
+  });
 });
