@@ -421,13 +421,25 @@ describe("App", () => {
       },
     };
 
-    const main = pipe(
+    const result = await pipe(
       program,
       App.provideM(livePrinter),
-      App.provide(testConsole)
+      App.provide(testConsole),
+      App.unsafeRun
     );
-    const result = await main({})();
+
     expect(result).toEqual(E.right(undefined));
     expect(lines).toEqual(["hello", "world"]);
+  });
+  it("should use Do - bind", async () => {
+    const result = await pipe(
+      App.Do,
+      App.bind("x", () => App.succeed(1)),
+      App.bind("y", () => App.succeed(2)),
+      App.bind("z", ({ x, y }) => App.succeed(x + y)),
+      App.map(({ z }) => z),
+      App.unsafeRun
+    );
+    expect(result).toEqual(E.right(3));
   });
 });

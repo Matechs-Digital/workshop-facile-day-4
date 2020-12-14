@@ -1,6 +1,7 @@
 import * as R from "@app/Reader";
 import * as T from "@app/Task";
 import * as E from "@app/Either";
+import * as RTE from "fp-ts/ReaderTaskEither";
 import { pipe, identity } from "@app/Function";
 
 export type App<R, E, A> = R.Reader<R, T.Task<E.Either<E, A>>>;
@@ -204,3 +205,20 @@ export function provideM<R, R2, E2>(
       chain((c) => pipe(fa, provide(c)))
     );
 }
+
+export function unsafeRun<E, A>(fa: App<unknown, E, A>) {
+  return fa({})();
+}
+
+export const Do = RTE.Do;
+
+export const bind: <N extends string, A, R, E, B>(
+  name: Exclude<N, keyof A>,
+  f: (a: A) => App<R, E, B>
+) => <R1, E1>(
+  fa: App<R1, E1, A>
+) => App<
+  R & R1,
+  E | E1,
+  { [K in N | keyof A]: K extends keyof A ? A[K] : B }
+> = RTE.bind as any;
