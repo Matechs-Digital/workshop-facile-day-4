@@ -1,6 +1,7 @@
 import * as App from "@app/App";
 import * as E from "@app/Either";
 import { pipe } from "@app/Function";
+import { makeStateRef } from "@app/StateRef";
 
 describe("App", () => {
   it("should use succeed", async () => {
@@ -441,5 +442,15 @@ describe("App", () => {
       App.unsafeRun
     );
     expect(result).toEqual(E.right(3));
+  });
+  it("should use stateRef", async () => {
+    const result = await pipe(
+      makeStateRef(0),
+      App.tap((ref) => ref.update((n) => n + 1)),
+      App.tap((ref) => ref.update((n) => n + 1)),
+      App.chain((ref) => ref.get),
+      App.unsafeRun
+    );
+    expect(result).toEqual(E.right(2));
   });
 });
