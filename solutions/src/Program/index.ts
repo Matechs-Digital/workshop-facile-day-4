@@ -1,6 +1,6 @@
 import * as App from "@app/App";
 import { Command } from "@app/Domain/Command";
-import { West } from "@app/Domain/Orientation";
+import { North, West } from "@app/Domain/Orientation";
 import { Planet } from "@app/Domain/Planet";
 import { RoverState } from "@app/Domain/RoverState";
 import { pipe } from "@app/Function";
@@ -89,6 +89,15 @@ export function process(
                     position: {
                       x: mod(state.position.x - 1, planet.x),
                       y: state.position.y,
+                    },
+                  };
+                }
+                case "East": {
+                  return {
+                    orientation: new North(),
+                    position: {
+                      x: state.position.x,
+                      y: mod(state.position.y + 1, planet.y),
                     },
                   };
                 }
