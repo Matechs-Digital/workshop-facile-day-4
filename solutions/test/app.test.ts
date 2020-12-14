@@ -1,5 +1,6 @@
 import * as App from "@app/App";
 import * as E from "@app/Either";
+import { pipe } from "@app/Function";
 
 describe("App", () => {
   it("should use succeed", async () => {
@@ -124,5 +125,29 @@ describe("App", () => {
     const result = await main();
 
     expect(result).toEqual(E.right(6));
+  });
+  it("should use map", async () => {
+    interface Config {
+      Config: {
+        base: number;
+      };
+    }
+
+    const program = pipe(
+      App.access((_: Config) => _.Config.base),
+      App.map((n) => n + 1),
+      App.map((n) => n + 2),
+      App.map((n) => n + 3)
+    );
+
+    const main = program({
+      Config: {
+        base: 1,
+      },
+    });
+
+    const result = await main();
+
+    expect(result).toEqual(E.right(7));
   });
 });
