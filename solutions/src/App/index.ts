@@ -100,3 +100,91 @@ export function zipWith<R1, E1, A, B, C>(
     )
   );
 }
+
+export function tap<A, R1, E1, B>(
+  f: (a: A) => App<R1, E1, B>
+): <R, E>(fa: App<R, E, A>) => App<R & R1, E | E1, A> {
+  return (fa) =>
+    pipe(
+      fa,
+      chain((a) =>
+        pipe(
+          f(a),
+          map(() => a)
+        )
+      )
+    );
+}
+
+export function catchAll<E, R1, E1, B>(
+  f: (error: E) => App<R1, E1, B>
+): <R, A>(fa: App<R, E, A>) => App<R & R1, E1, A | B> {
+  return <R, A>(fa: App<R, E, A>) => (env: R & R1) => () =>
+    fa(env)().then((res) =>
+      res._tag === "Left"
+        ? (f(res.left)(env)() as Promise<E.Either<E1, A | B>>)
+        : res
+    );
+}
+
+export type ExtractE<X> = [X] extends [App<infer _R, infer _E, infer _A>]
+  ? _E
+  : never;
+
+export type ExtractR<X> = [X] extends [App<infer _R, infer _E, infer _A>]
+  ? _R
+  : never;
+
+export function tuple<Apps extends readonly App<any, any, any>[]>(
+  ...apps: Apps & { readonly 0: App<any, any, any> }
+): App<
+  ExtractR<Apps[number]>,
+  ExtractE<Apps[number]>,
+  {
+    [k in keyof Apps]: [Apps[k]] extends [App<infer _R, infer _E, infer _A>]
+      ? _A
+      : never;
+  }
+> {
+  return (env) => async (): Promise<any> => {
+    const results: any[] = [];
+    for (const app of apps) {
+      const res = await app(env)();
+
+      if (E.isLeft(res)) {
+        return res;
+      } else {
+        results.push(res.right);
+      }
+    }
+    return E.right(results);
+  };
+}
+
+export function tuplePar<Apps extends readonly App<any, any, any>[]>(
+  ...apps: Apps & { readonly 0: App<any, any, any> }
+): App<
+  ExtractR<Apps[number]>,
+  ExtractE<Apps[number]>,
+  {
+    [k in keyof Apps]: [Apps[k]] extends [App<infer _R, infer _E, infer _A>]
+      ? _A
+      : never;
+  }
+> {
+  return (env) => async (): Promise<any> => {
+    const results: any[] = [];
+
+    const executed = await Promise.all(apps.map((app) => app(env)()));
+
+    for (const res of executed) {
+      if (E.isLeft(res)) {
+        return res;
+      } else {
+        results.push(res.right);
+      }
+    }
+
+    return E.right(results);
+  };
+}

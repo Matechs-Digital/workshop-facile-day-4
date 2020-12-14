@@ -243,4 +243,87 @@ describe("App", () => {
     const result = await main();
     expect(result).toEqual(E.right(30));
   });
+  it("should use catchAll", async () => {
+    interface Config {
+      Config: {
+        base: number;
+      };
+    }
+
+    function addOneTimeout(n: number): App.App<unknown, never, number> {
+      return App.async(
+        () =>
+          new Promise<number>((res) => {
+            setTimeout(() => {
+              res(n + 1);
+            }, 100);
+          })
+      );
+    }
+
+    class DivideError {
+      readonly _tag = "DivideError";
+      constructor(readonly s: string) {}
+    }
+
+    function divideOrFail(n: number): App.App<unknown, DivideError, number> {
+      return App.trySync(
+        () => {
+          if (n === 0) {
+            throw "n is 0";
+          }
+          return 10 / n;
+        },
+        (s) => new DivideError(s as string)
+      );
+    }
+
+    const initialValue = App.access((_: Config) => _.Config.base);
+
+    const program = pipe(
+      initialValue,
+      App.chain(addOneTimeout),
+      App.chain(divideOrFail),
+      App.catchAll(() => App.succeed(1)),
+      App.map((n) => n + 3)
+    );
+
+    const main = program({
+      Config: {
+        base: -1,
+      },
+    });
+
+    const result = await main();
+
+    expect(result).toEqual(E.right(4));
+  });
+  it("should use tuple", async () => {
+    const program = App.tuple(
+      App.succeed(0),
+      App.succeed(1),
+      App.succeed(2),
+      App.succeed(3)
+    );
+    const main = program({});
+
+    const result = await main();
+
+    expect(result).toEqual(E.right([0, 1, 2, 3]));
+  });
+  it("should use tuple - fail", async () => {
+    const program = App.tuplePar(
+      App.succeed(0),
+      App.succeed(1),
+      App.fail("error"),
+      App.succeed(2),
+      App.succeed(3)
+    );
+
+    const main = program({});
+
+    const result = await main();
+
+    expect(result).toEqual(E.left("error"));
+  });
 });
