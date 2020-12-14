@@ -106,4 +106,23 @@ describe("App", () => {
     expect(resultFail).toEqual(E.left(new MyError("error")));
     expect(resultSucceed).toEqual(E.right("result"));
   });
+  it("should use access", async () => {
+    interface Config {
+      Config: {
+        multiplier: number;
+      };
+    }
+
+    const program = App.access(({ Config }: Config) => Config.multiplier * 3);
+
+    const main = program({
+      Config: {
+        multiplier: 2,
+      },
+    });
+
+    const result = await main();
+
+    expect(result).toEqual(E.right(6));
+  });
 });

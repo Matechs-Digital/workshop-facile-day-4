@@ -49,3 +49,10 @@ export function tryAsync<A, E>(
       .then((a) => E.right(a))
       .catch((e) => E.left(onError(e)));
 }
+
+export function access<R, A>(f: (r: R) => A): App<R, never, A> {
+  return (c) => () =>
+    new Promise((res) => {
+      res(E.right(f(c)));
+    });
+}
