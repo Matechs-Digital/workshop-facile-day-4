@@ -204,4 +204,43 @@ describe("App", () => {
 
     expect(result).toEqual(E.right(8));
   });
+  it("should use accessM", async () => {
+    const lines: string[] = [];
+    interface Printer {
+      Printer: {
+        printLn: (line: string) => App.UIO<void>;
+      };
+    }
+    function printLn(line: string) {
+      return App.accessM(({ Printer }: Printer) => Printer.printLn(line));
+    }
+    const program = pipe(
+      printLn("hello"),
+      App.chain(() => printLn("world"))
+    );
+    const testPrinter: Printer = {
+      Printer: {
+        printLn: (line) =>
+          App.sync(() => {
+            lines.push(line);
+          }),
+      },
+    };
+    const main = program(testPrinter);
+    const result = await main();
+    expect(result).toEqual(E.right(undefined));
+    expect(lines).toEqual(["hello", "world"]);
+  });
+  it("should use zipWith", async () => {
+    const program = pipe(
+      App.sync(() => 10),
+      App.zipWith(
+        App.sync(() => 20),
+        (a, b) => a + b
+      )
+    );
+    const main = program({});
+    const result = await main();
+    expect(result).toEqual(E.right(30));
+  });
 });
