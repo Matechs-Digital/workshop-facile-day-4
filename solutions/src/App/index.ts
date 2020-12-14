@@ -62,3 +62,19 @@ export function map<A, B>(
 ): <R, E>(fa: App<R, E, A>) => App<R, E, B> {
   return R.map(T.map(E.map(f)));
 }
+
+export function chain<A, R1, E1, B>(
+  f: (a: A) => App<R1, E1, B>
+): <R, E>(fa: App<R, E, A>) => App<R & R1, E | E1, B> {
+  return (fa) => (c) => async () => {
+    const maybeA = await fa(c)();
+
+    if (E.isLeft(maybeA)) {
+      return maybeA;
+    }
+
+    const maybeB = await f(maybeA.right)(c)();
+
+    return maybeB;
+  };
+}
