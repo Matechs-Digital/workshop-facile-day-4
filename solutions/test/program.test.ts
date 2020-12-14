@@ -147,4 +147,39 @@ describe("Mars Rover", () => {
       })
     );
   });
+  it("should execute a batch of commands", async () => {
+    const programConfig = {
+      ProgramConfig: {
+        planet: {
+          x: 5,
+          y: 4,
+        },
+        initialState: {
+          orientation: new East(),
+          position: {
+            x: 0,
+            y: 0,
+          },
+        },
+      },
+    };
+
+    const result = await pipe(
+      P.move([new TurnLeft(), new TurnLeft()]),
+      App.chain(() => P.getRoverState),
+      App.provideM(P.initialState),
+      App.provide<P.ProgramConfig>(programConfig),
+      App.unsafeRun
+    );
+
+    expect(result).toEqual(
+      E.right<never, RoverState>({
+        orientation: new West(),
+        position: {
+          x: 4,
+          y: 1,
+        },
+      })
+    );
+  });
 });

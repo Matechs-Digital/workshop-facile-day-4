@@ -52,13 +52,12 @@ export const setRoverState = (nextState: RoverState) =>
   );
 
 export function move(
-  _commands: readonly Command[]
+  commands: readonly Command[]
 ): App.RIO<ProgramConfig & ProgramState, RoverState> {
   return pipe(
-    App.Do,
-    App.bind("planet", () => getPlanet),
-    App.bind("state", () => getRoverState),
-    App.map(({ state }) => state)
+    commands,
+    App.foreach(process),
+    App.chain(() => getRoverState)
   );
 }
 

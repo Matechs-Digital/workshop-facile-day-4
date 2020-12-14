@@ -2,6 +2,7 @@ import * as R from "@app/Reader";
 import * as T from "@app/Task";
 import * as E from "@app/Either";
 import * as RTE from "fp-ts/ReaderTaskEither";
+import * as A from "fp-ts/ReadonlyArray";
 import { pipe, identity } from "@app/Function";
 
 export type App<R, E, A> = R.Reader<R, T.Task<E.Either<E, A>>>;
@@ -222,3 +223,9 @@ export const bind: <N extends string, A, R, E, B>(
   E | E1,
   { [K in N | keyof A]: K extends keyof A ? A[K] : B }
 > = RTE.bind as any;
+
+export const foreach: <A, FR, FE, B>(
+  f: (a: A) => App<FR, FE, B>
+) => (ta: readonly A[]) => App<FR, FE, readonly B[]> = A.traverse(
+  RTE.ApplicativeSeq
+);
