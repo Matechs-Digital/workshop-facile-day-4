@@ -121,22 +121,124 @@ export function process(
               }
             }
             case "TurnRight": {
-              return {
-                orientation: state.orientation,
-                position: state.position,
-              };
+              switch (state.orientation._tag) {
+                case "North": {
+                  return {
+                    orientation: new East(),
+                    position: {
+                      x: mod(state.position.x + 1, planet.x),
+                      y: state.position.y,
+                    },
+                  };
+                }
+                case "East": {
+                  return {
+                    orientation: new South(),
+                    position: {
+                      x: state.position.x,
+                      y: mod(state.position.y - 1, planet.y),
+                    },
+                  };
+                }
+                case "South": {
+                  return {
+                    orientation: new East(),
+                    position: {
+                      x: mod(state.position.x - 1, planet.x),
+                      y: state.position.y,
+                    },
+                  };
+                }
+                case "West": {
+                  return {
+                    orientation: new North(),
+                    position: {
+                      x: state.position.x,
+                      y: mod(state.position.y + 1, planet.y),
+                    },
+                  };
+                }
+              }
             }
             case "MoveForward": {
-              return {
-                orientation: state.orientation,
-                position: state.position,
-              };
+              switch (state.orientation._tag) {
+                case "North": {
+                  return {
+                    orientation: new North(),
+                    position: {
+                      x: state.position.x,
+                      y: mod(state.position.y + 1, planet.y),
+                    },
+                  };
+                }
+                case "East": {
+                  return {
+                    orientation: new East(),
+                    position: {
+                      x: mod(state.position.x + 1, planet.x),
+                      y: state.position.y,
+                    },
+                  };
+                }
+                case "South": {
+                  return {
+                    orientation: new South(),
+                    position: {
+                      x: state.position.x,
+                      y: mod(state.position.y - 1, planet.y),
+                    },
+                  };
+                }
+                case "West": {
+                  return {
+                    orientation: new West(),
+                    position: {
+                      x: mod(state.position.x - 1, planet.x),
+                      y: state.position.y,
+                    },
+                  };
+                }
+              }
             }
             case "MoveBackward": {
-              return {
-                orientation: state.orientation,
-                position: state.position,
-              };
+              switch (state.orientation._tag) {
+                case "North": {
+                  return {
+                    orientation: new South(),
+                    position: {
+                      x: state.position.x,
+                      y: mod(state.position.y - 1, planet.y),
+                    },
+                  };
+                }
+                case "East": {
+                  return {
+                    orientation: new West(),
+                    position: {
+                      x: mod(state.position.x - 1, planet.x),
+                      y: state.position.y,
+                    },
+                  };
+                }
+                case "South": {
+                  return {
+                    orientation: new North(),
+                    position: {
+                      x: state.position.x,
+                      y: mod(state.position.y + 1, planet.y),
+                    },
+                  };
+                }
+                case "West": {
+                  return {
+                    orientation: new East(),
+                    position: {
+                      x: mod(state.position.x + 1, planet.x),
+                      y: state.position.y,
+                    },
+                  };
+                }
+              }
             }
           }
         }
