@@ -60,5 +60,5 @@ export function access<R, A>(f: (r: R) => A): App<R, never, A> {
 export function map<A, B>(
   f: (a: A) => B
 ): <R, E>(fa: App<R, E, A>) => App<R, E, B> {
-  return (fa) => (r) => () => fa(r)().then(E.map(f));
+  return R.map(T.map(E.map(f)));
 }
