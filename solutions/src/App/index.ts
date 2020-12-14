@@ -18,3 +18,34 @@ export function sync<A>(f: () => A): App<unknown, never, A> {
       res(E.right(f()));
     });
 }
+
+export function async<A>(f: () => Promise<A>): App<unknown, never, A> {
+  return () => async () => {
+    const a = await f();
+    return E.right(a);
+  };
+}
+
+export function trySync<A, E>(
+  f: () => A,
+  onError: (u: unknown) => E
+): App<unknown, E, A> {
+  return () => () =>
+    new Promise((res) => {
+      try {
+        res(E.right(f()));
+      } catch (e) {
+        res(E.left(onError(e)));
+      }
+    });
+}
+
+export function tryAsync<A, E>(
+  f: () => Promise<A>,
+  onError: (u: unknown) => E
+): App<unknown, E, A> {
+  return () => () =>
+    f()
+      .then((a) => E.right(a))
+      .catch((e) => E.left(onError(e)));
+}
