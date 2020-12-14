@@ -150,4 +150,58 @@ describe("App", () => {
 
     expect(result).toEqual(E.right(7));
   });
+  it("should use chain", async () => {
+    interface Config {
+      Config: {
+        base: number;
+      };
+    }
+
+    function addOneTimeout(n: number): App.App<unknown, never, number> {
+      return App.async(
+        () =>
+          new Promise<number>((res) => {
+            setTimeout(() => {
+              res(n + 1);
+            }, 100);
+          })
+      );
+    }
+
+    class DivideError {
+      readonly _tag = "DivideError";
+      constructor(readonly s: string) {}
+    }
+
+    function divideOrFail(n: number): App.App<unknown, DivideError, number> {
+      return App.trySync(
+        () => {
+          if (n === 0) {
+            throw "n is 0";
+          }
+          return 10 / n;
+        },
+        (s) => new DivideError(s as string)
+      );
+    }
+
+    const initialValue = App.access((_: Config) => _.Config.base);
+
+    const program = pipe(
+      initialValue,
+      App.chain(addOneTimeout),
+      App.chain(divideOrFail),
+      App.map((n) => n + 3)
+    );
+
+    const main = program({
+      Config: {
+        base: 1,
+      },
+    });
+
+    const result = await main();
+
+    expect(result).toEqual(E.right(8));
+  });
 });
