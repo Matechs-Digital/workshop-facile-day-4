@@ -4,7 +4,11 @@ import { East, North, South, West } from "@app/Domain/Orientation";
 import { Planet } from "@app/Domain/Planet";
 import { RoverState } from "@app/Domain/RoverState";
 import { pipe } from "@app/Function";
+import * as P from "@app/Program";
 import { makeStateRef } from "@app/StateRef";
+import * as path from "path";
+import { readFile } from "@app/FS";
+import { parseInitialState, parsePlanet } from "@app/Parser";
 
 export interface ProgramConfig {
   ProgramConfig: {
@@ -248,3 +252,27 @@ export function process(
     App.map(() => {})
   );
 }
+
+export const liveProgramConfig = pipe(
+  App.Do,
+  App.bind("initialState", () =>
+    pipe(
+      readFile(path.join(__dirname, "../../config/rover.txt")),
+      App.chain(parseInitialState)
+    )
+  ),
+  App.bind("planet", () =>
+    pipe(
+      readFile(path.join(__dirname, "../../config/planet.txt")),
+      App.chain(parsePlanet)
+    )
+  ),
+  App.map(
+    ({ initialState, planet }): P.ProgramConfig => ({
+      ProgramConfig: {
+        initialState,
+        planet,
+      },
+    })
+  )
+);

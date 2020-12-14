@@ -32,6 +32,17 @@ export function async<A>(f: () => Promise<A>): UIO<A> {
   };
 }
 
+export function callback<E, A>(
+  f: (cb: (res: E.Either<E, A>) => void) => void
+): FIO<E, A> {
+  return () => () =>
+    new Promise((resolve) => {
+      f((result) => {
+        resolve(result);
+      });
+    });
+}
+
 export function trySync<A, E>(
   f: () => A,
   onError: (u: unknown) => E
