@@ -3,7 +3,7 @@ import * as E from "@app/Either";
 import * as App from "@app/App";
 import { TurnLeft } from "@app/Domain/Command";
 import { pipe } from "@app/Function";
-import { East, North, West } from "@app/Domain/Orientation";
+import { East, North, South, West } from "@app/Domain/Orientation";
 import { RoverState } from "@app/Domain/RoverState";
 
 describe("Mars Rover", () => {
@@ -73,6 +73,76 @@ describe("Mars Rover", () => {
         position: {
           x: 0,
           y: 0,
+        },
+      })
+    );
+  });
+  it("should move left looking South ending up looking East", async () => {
+    const programConfig = {
+      ProgramConfig: {
+        planet: {
+          x: 5,
+          y: 4,
+        },
+        initialState: {
+          orientation: new South(),
+          position: {
+            x: 4,
+            y: 0,
+          },
+        },
+      },
+    };
+
+    const result = await pipe(
+      P.process(new TurnLeft()),
+      App.chain(() => P.getRoverState),
+      App.provideM(P.initialState),
+      App.provide<P.ProgramConfig>(programConfig),
+      App.unsafeRun
+    );
+
+    expect(result).toEqual(
+      E.right<never, RoverState>({
+        orientation: new East(),
+        position: {
+          x: 0,
+          y: 0,
+        },
+      })
+    );
+  });
+  it("should move left looking West ending up looking South", async () => {
+    const programConfig = {
+      ProgramConfig: {
+        planet: {
+          x: 5,
+          y: 4,
+        },
+        initialState: {
+          orientation: new West(),
+          position: {
+            x: 0,
+            y: 0,
+          },
+        },
+      },
+    };
+
+    const result = await pipe(
+      P.process(new TurnLeft()),
+      App.chain(() => P.getRoverState),
+      App.provideM(P.initialState),
+      App.provide<P.ProgramConfig>(programConfig),
+      App.unsafeRun
+    );
+
+    expect(result).toEqual(
+      E.right<never, RoverState>({
+        orientation: new South(),
+        position: {
+          x: 0,
+          y: 3,
         },
       })
     );

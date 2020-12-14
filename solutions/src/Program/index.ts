@@ -1,6 +1,6 @@
 import * as App from "@app/App";
 import { Command } from "@app/Domain/Command";
-import { North, West } from "@app/Domain/Orientation";
+import { East, North, South, West } from "@app/Domain/Orientation";
 import { Planet } from "@app/Domain/Planet";
 import { RoverState } from "@app/Domain/RoverState";
 import { pipe } from "@app/Function";
@@ -101,11 +101,25 @@ export function process(
                     },
                   };
                 }
+                case "South": {
+                  return {
+                    orientation: new East(),
+                    position: {
+                      x: mod(state.position.x + 1, planet.x),
+                      y: state.position.y,
+                    },
+                  };
+                }
+                case "West": {
+                  return {
+                    orientation: new South(),
+                    position: {
+                      x: state.position.x,
+                      y: mod(state.position.y - 1, planet.y),
+                    },
+                  };
+                }
               }
-              return {
-                orientation: state.orientation,
-                position: state.position,
-              };
             }
             case "TurnRight": {
               return {
